@@ -39,3 +39,4 @@
 
 # debug information files
 *.dwo
+R4WiFi_secrets.h
