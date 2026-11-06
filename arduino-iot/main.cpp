@@ -28,6 +28,19 @@ const char* topic = "testiaa/aihebb";
 const long interval = 8000;
 unsigned long previousMillis = 0;
 
+bool connectToMqtt() {
+  Serial.print("Connecting to MQTT broker...");
+  mqttClient.setId("uno-r4-distance");
+  if (!mqttClient.connect(mqttServer, mqttPort)) {
+    Serial.print("MQTT connection failed! Error code = ");
+    Serial.println(mqttClient.connectError());
+    return false;
+  }
+
+  Serial.println("Connected to MQTT broker!");
+  return true;
+}
+
 void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
@@ -44,17 +57,18 @@ void setup() {
   }
   Serial.println("\nConnected to WiFi!");
 
-  // Connect to MQTT broker
-  Serial.print("Connecting to MQTT broker...");
-  if (!mqttClient.connect(mqttServer, mqttPort)) {
-    Serial.print("MQTT connection failed! Error code = ");
-    Serial.println(mqttClient.connectError());
-    while (1); // Stop execution if connection fails
-  }
-  Serial.println("Connected to MQTT broker!");
+  connectToMqtt();
 }
 
 void loop() {
+  if (!mqttClient.connected()) {
+    Serial.println("MQTT lost, reconnecting...");
+    if (!connectToMqtt()) {
+      delay(5000);
+      return;
+    }
+  }
+
   int distance = getDistance();
 
   mqttClient.poll(); // Keep the connection alive
